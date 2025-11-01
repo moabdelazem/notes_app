@@ -6,7 +6,6 @@ import {
   updateNote,
   deleteNote,
   toggleArchiveNote,
-  getAllTags,
   bulkDeleteNotes,
 } from "../controllers/notesController";
 
@@ -33,8 +32,5 @@ router.patch("/:id/archive", toggleArchiveNote);
 
 // POST /api/notes/bulk-delete - Delete multiple notes
 router.post("/bulk-delete", bulkDeleteNotes);
-
-// GET /api/tags - Get all tags with usage count
-router.get("/tags", getAllTags);
 
 export default router;

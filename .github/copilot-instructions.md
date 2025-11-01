@@ -1,12 +1,22 @@
-# Notes API - AI Coding Agent Instructions
+# Notes App - AI Coding Agent Instructions
 
-## Architecture Overview
+## Project Structure (Monorepo)
 
-This is a **TypeScript/Express REST API** for a notes application with PostgreSQL. The architecture follows a layered pattern:
+This is a **full-stack TypeScript monorepo** with separate backend and frontend:
 
-- **Entry**: `server.ts` → `app.ts` (Express setup) → `routes/` → `controllers/` → `database/db.ts`
-- **Key Pattern**: Controllers use database helper functions (`query`, `queryOne`, `transaction`) from `database/db.ts`, NOT direct pool access
-- **Error Handling**: Custom `AppError` class with status codes, caught by global `errorHandler` middleware
+- **Backend** (`/src`): Express REST API + PostgreSQL
+- **Frontend** (`/web`): Next.js 16 App Router + React Query + shadcn/ui
+- **Deployment**: Separate containers (backend + database via Docker Compose, frontend via Vercel/standalone)
+
+## Backend Architecture (Express API)
+
+### Request Flow
+
+**Entry**: `server.ts` → `app.ts` (Express setup) → `routes/` → `controllers/` → `database/db.ts`
+
+**Key Pattern**: Controllers use database helper functions (`query`, `queryOne`, `transaction`) from `database/db.ts`, NOT direct pool access
+
+**Error Handling**: Custom `AppError` class with status codes, caught by global `errorHandler` middleware
 
 ## Critical Database Patterns
 
@@ -61,14 +71,70 @@ await transaction(async (client) => {
 ## Development Workflow
 
 ```bash
-# Start PostgreSQL (Docker)
-npm run dev_database:up
+# Backend setup and development (from root)
+npm run db:up              # Start PostgreSQL container
+npm run dev                # Start API server (localhost:6767)
+npm run db:shell           # Access PostgreSQL REPL
+npm run db:reset           # Reset database (deletes data/)
 
-# Start dev server (nodemon + ts-node)
-npm run dev
+# Frontend development (from /web)
+cd web && npm run dev      # Start Next.js dev server (localhost:3000)
 
 # Database init runs automatically via docker-entrypoint-initdb.d/init.sql
 ```
+
+## Frontend Architecture (Next.js)
+
+### Tech Stack & Patterns
+
+- **Framework**: Next.js 16 (App Router) with React 19 and React Server Components
+- **Styling**: Tailwind CSS v4 + shadcn/ui (New York style, neutral base color)
+- **Data Fetching**: TanStack React Query (for server state management)
+- **Component Library**: shadcn/ui components (stored in `@/components/ui`)
+- **Icons**: Lucide React
+- **Utils**: `cn()` utility (`lib/utils.ts`) for conditional Tailwind classes
+
+### File Structure Conventions
+
+```
+web/
+├── app/                    # App Router pages and layouts
+│   ├── layout.tsx         # Root layout (fonts, metadata)
+│   ├── page.tsx           # Home page (notes list/grid)
+│   └── globals.css        # Tailwind directives + CSS variables
+├── components/            # React components (to be added)
+│   └── ui/               # shadcn/ui components (auto-generated)
+├── lib/
+│   └── utils.ts          # Utility functions (cn() for className merging)
+└── hooks/                # Custom React hooks (to be added)
+```
+
+### Key Configuration Files
+
+- `components.json` - shadcn/ui config (RSC enabled, path aliases, New York style)
+- `next.config.ts` - Next.js configuration
+- Path aliases: `@/components`, `@/lib`, `@/hooks`, `@/ui` (from components.json)
+
+### Frontend Development Guidelines
+
+1. **Use Server Components by default** - Only add `'use client'` when needed (interactivity, hooks, context)
+2. **Data fetching**: Use React Query for API calls to backend (`http://localhost:6767/api`)
+3. **Styling**: Use Tailwind + `cn()` utility for conditional classes
+4. **Components**: Install shadcn/ui components as needed (`npx shadcn@latest add <component>`)
+5. **API integration**: Backend runs on port 6767, frontend on 3000 (CORS configured for localhost:3000)
+
+## API Endpoints Reference
+
+All endpoints prefixed with `/api` (e.g., `GET /api/notes`):
+
+- `GET /api/notes` - List notes (query: `?archived=true`, `?tag=work`, `?search=keyword`)
+- `GET /api/notes/:id` - Get single note
+- `POST /api/notes` - Create note (body: `{ title, description?, color?, tags?: string[] }`)
+- `PATCH /api/notes/:id` - Update note
+- `PATCH /api/notes/:id/archive` - Toggle archive status
+- `DELETE /api/notes/:id` - Delete note
+- `POST /api/notes/bulk-delete` - Delete multiple (body: `{ ids: number[] }`)
+- `GET /api/tags` - List all tags with usage count
 
 ## Controller Conventions
 

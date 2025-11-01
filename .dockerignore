@@ -56,3 +56,6 @@ coverage
 .editorconfig
 .prettierrc*
 nodemon.json
+
+# web dir
+web/
