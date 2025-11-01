@@ -1,0 +1,15 @@
+# Node
+node_modules
+
+# Envrionments 
+.env
+
+# Datbase volume
+data
+
+# Logs
+logs/
+*.log
+
+# Build
+dist
